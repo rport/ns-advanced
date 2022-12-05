@@ -605,16 +605,22 @@ ${record.custbody_comments}
                 <td colspan="34" class="item-row">${item.description}</td>
               </tr>
             <#else>
+            <#if item.quantity gt 0>
               <tr>
-                <td colspan="23" class="item"><ul class="items"><li>${item.description}
-                  <!-- START ASSET ID TO LINE HEADER IF APPLICABLE --> 
-              		<#if record.custbody_fs_show_item_location?string=="Yes">
-                      <#if item.custcol_item_location?has_content><strong>&nbsp;&nbsp;[${item.custcol_item_location}]</strong></#if>
-                      <#if item.custcol_item_assetid?has_content><strong>&nbsp;&nbsp;[${item.custcol_item_assetid}]</strong></#if>
-                	</#if>
-              		<!-- END ASSET ID TO LINE HEADER IF APPLICABLE --></li></ul></td>
+                <td colspan="23" class="item">
+                    <ul class="items">
+                        <li>${item.description}
+                        <!-- START ASSET ID TO LINE HEADER IF APPLICABLE --> 
+                            <#if record.custbody_fs_show_item_location?string=="Yes">
+                            <#if item.custcol_item_location?has_content><strong>&nbsp;&nbsp;[${item.custcol_item_location}]</strong></#if>
+                            <#if item.custcol_item_assetid?has_content><strong>&nbsp;&nbsp;[${item.custcol_item_assetid}]</strong></#if>
+                            </#if>
+                        <!-- END ASSET ID TO LINE HEADER IF APPLICABLE -->
+                        </li>
+                    </ul>
+                </td>
                 <td colspan="3" align="center">
-                  <#if custbody_item_qty_hide_all?string=="No">
+                  <#if item.custcol_display_qty?string=="Yes">
                     <#if item.quantity gt 0>${item.quantity?string("0.#")}
                     <#else>
                       —
@@ -635,6 +641,7 @@ ${record.custbody_comments}
                     <td colspan="3" align="right"><#if item.amount gt 0>${item.amount?string.currency}</#if></td>
                 </#if>
               </tr>
+            </#if>
             </#if>
           </#if>
         </#list>
