@@ -302,7 +302,7 @@ ${record.custbody_comments}
 <!-- ##                                 PROJECT ESTIMATE LAYOUT START                                ## -->
 <!-- ################################################################################################## -->
 
-<#if record.department?contains ("2-UM") || record.department?contains ("3-ER") || record.department?contains ("4-MW") || record.department?contains ("5-CW") || record.department?contains ("5-TR") || record.department?contains ("7-Consulting") || record.department?contains ("8-PS") || record.department?contains ("Online")>
+<#if record.department?contains ("3-ER") || record.department?contains ("4-MW") || record.department?contains ("5-CW") || record.department?contains ("5-TR") || record.department?contains ("7-Consulting") || record.department?contains ("8-PS") || record.department?contains ("Online")>
 
 <!-- HEADING ROW START -->
 
@@ -512,7 +512,7 @@ ${record.custbody_comments}
 <!-- ##                                   PLANNED MAINTENANCE LAYOUT                                 ## -->
 <!-- ################################################################################################## -->
 
-<#if record.department?contains ("1-PM")>
+<#if record.department?contains ("1-PM") || record.department?contains ("2-UM")>
 
     <table style="width: 100%;">
       <tr>
