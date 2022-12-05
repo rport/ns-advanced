@@ -614,7 +614,7 @@ ${record.custbody_comments}
                 	</#if>
               		<!-- END ASSET ID TO LINE HEADER IF APPLICABLE --></li></ul></td>
                 <td colspan="3" align="center">
-                  <#if item.custcol_display_qty?string=="Yes">
+                  <#if custbody_item_qty_hide_all?string=="Yes">
                     <#if item.quantity gt 0>${item.quantity?string("0.#")}
                     <#else>
                       —
