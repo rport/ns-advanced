@@ -1,0 +1,916 @@
+<?xml version="1.0"?><!DOCTYPE pdf PUBLIC "-//big.faceless.org//report" "report-1.1.dtd">
+
+<#setting number_format=",##0.##" />
+<#setting date_format="dd/MM/yy" />
+<!-- <#setting time_format="HH:mm"> -->
+
+<!--  REFERENCES & LINKS
+ NetSuite Schema Browser:  https://system.netsuite.com/help/helpcenter/en_US/srbrowser/Browser2022_1/schema/record/account.html
+ Big Faceless PDF Library: http://bfo.com/products/pdf/
+ Big Faceless Examples:    http://bfo.com/products/report/examples/
+ Big Faceless PDF HTML:    http://bfo.com/products/report/docs/tags/
+ Apache FreeMarker Manual: http://freemarker.org/docs/index.html
+ NetSuite Professionals:   https://netsuiteprofessionals.slack.com
+ Show the XML of a Page:   Append "&xml=t" to the URL
+-->
+
+<!-- COMMON FEILDS ON ADVANCED PDF/HTML TEMPLATES
+ ${record.entity.entityid}			Job Number of Transaction Parent Entity
+ ${record.entity.parent}			Customer ID of Parent Entity, will look like 'AA0000 Customer Name'
+ ${record.entity.contact}			Primary Contact Name
+ ${record.entity.entity.altname}	"CUSTOMER NAME : SUBCUSTOMER : JOB ID"
+ ${record.consolidatebalance}		Total Balance Due ($00,000.00)
+ ${record.entity.overduebalance}	Overdue Amount ($00,000.00)
+-->
+
+<!-- DEFINE COLOUR PALETTE -->
+<#assign BGF = "#F8F8F8" />  <!-- Background Fill ${BGF} -->
+<#assign BGB = "#E8E8E8" />  <!-- Background Border  ${BGB} -->
+<#assign FTF = "#F0F0F0" /> <!-- Font Fill  ${FTF} -->
+<#assign SECRET = "#F8F8F8" /> <!-- Font Fill  ${FTF} -->
+
+<#assign Comments = record.CUSTBODY_COMMENTS />
+<#assign DiscountAmount = record.discounttotal?abs?string.currency>
+<#assign DiscountedSubtotal = (record.subtotal + record.discounttotal)?abs?string.currency>
+<#assign DiscountPercentage = (record.discounttotal/record.subtotal)?abs?string.percent>
+
+<#assign aDateTime = .now>
+
+<!-- ASSIGN SIMPLE NAMES TO NS FIELD ID'S -->
+<#assign QuoteSubTotal = record.subtotal>
+<#assign QuoteSubTotalMonthly = record.subtotal/12>
+<#assign QuoteMonthly = QuoteSubTotalMonthly?html?replace('[^0-9.]','','r')?number?string(",##0.00")>
+<#assign QuoteDiscount = record.discounttotal>
+<#assign QuoteDiscountRate = record.discountrate >
+<#assign QuoteDiscountSubtotal = (record.subtotal+record.discounttotal)>
+<#assign QuoteGST = record.taxtotal>
+<#assign QuoteTotal = record.total>
+<#assign CCTotal = record.total?html?replace('[^0-9.]','','r')?number * 1.03>
+
+<!-- ASSIGN SIMPLE NAMES TO ANALYTICS -->
+<#assign QuoteHRS = record.custbody_1050_totalesthours>
+<#assign QuoteECOST = record.totalcostestimate>
+<#assign QuoteEGPP = record.estgrossprofitpercent>
+<#assign QuoteEGPD = record.estgrossprofit>
+<#assign HRRate = record.total/record.custbody_1050_totalesthours>
+
+<!-- SET CONACT NAME -->
+<#assign ContactFullName = record.custbody_transaction_contact>
+<#assign ContactFirstName = ContactFullName?keep_before(" ")>
+
+<!-- ASSIGN DATES -->
+<#assign aDateTime = .now>
+<#assign aDate = aDateTime?date?string["MMMM dd, yyyy"]>
+
+<!-- DEFINE VARIABLES START -->
+<#macro TotalMessageGeneral>
+We have taken care in preparing this scope of work including the quantities, equipment types, makes and models to provide you this proposal given the information provided to us. That said, we are open to alternatives or changes in the scope to match your expectations or budget. In addition, our scope may change subject to requirements outside our control or influence by a third party. If you need further advice or have questions feel free to contact <strong>${record.salesrep}</strong> on 03 8588 2900 or email ${record.salesrep.email} for more information.
+</#macro>
+
+<#macro TotalMessagePlannedMaintenance>
+Thank you for considering Firewize for your Fire and Essential Safety Measures ("ESM") maintenance. We have taken care in preparing this proposal in accordance with our <a href="https://l.firewize.com/SDS1851">Service Disclosure Statement ("SDS")</a> to help you satisfy your statutory maintenance requirements. If you would like to change the scope as we understand it, need further advice or have any question then give <strong>${record.salesrep}</strong> a call on 03 8588 2900, and we will be only too willing to help. Unless otherwise stated, all prices quoted are exclusive of GST.
+</#macro>
+
+
+<#macro DiscountMessage>
+<sup>&dagger;</sup>Where a discount has been applied to this proposal the discount is subject to strict eligibility criteria. To satisfy the eligibility criteria, the Purchaser must; (a) comply with all of the terms and conditions without variation set out in this offer; and (b) ensure the full unencumbered payment, including GST of all invoices associated with the delivery of goods and or services described in this proposal in full before the due date of the invoice. For the avoidance of doubt, the Discount does not apply if the eligibility criteria has not been met. Firewize reserves the right to modify or discontinue the terms of this offer at any time. Other exclusions and/or limits may apply.
+</#macro>
+
+<pdfset>
+
+<pdf>
+<head>
+<!-- <meta name="password" value="pass" /> -->
+<meta name="title" value="${record.tranid} Firewize <#if record.entitystatus == "BUDGET">Budget<#else>Estimate</#if>"/>
+<meta name="author" value="${record.salesrep}"/>
+<meta name="show-bookmarks " value="true"/>
+
+<bookmarklist>
+	<bookmark name="Cover Letter" href="#cover"/>
+	<bookmark name="Scope of Work" href="#scope"/>
+	<bookmark name="Terms Conditions" href="#tc"/>
+</bookmarklist>
+
+  <macrolist>
+	<!-- HEADER START -->
+	<macro id="nlheader">
+		<table class="header" style="width: 100%;">
+			<tr>
+			<td width="35mm">
+				<span class="headeraddresscompany">Firewize Services Pty Ltd</span><br />
+				<span class="headeraddress">Unit 5, 585 Blackburn Road<br />Notting Hill  VIC  3168<br /></span><br />
+				<span class="headeraddress">PO BOX 122<br />Mount Waverley  VIC  3149</span>
+			</td>
+			<td width="35mm">
+				<span class="headeraddress"><br />t: +61 3 8588 2900</span><br />
+				<span class="headeraddress">f: +61 3 8610 0144<br /></span><br />
+				<span class="headeraddress">ABN 94 099 745 294</span><br />
+				<span class="headeraddress">www.firewize.com</span>
+			</td>
+			<td align="right">
+				<img src="${companyInformation.logoUrl}" style="width:220px; height:51px; float: left; margin: 3px" />
+			</td>
+			</tr>
+		</table>
+	</macro>
+	<!-- HEADER END   -->
+
+    <!-- FOOTER START -->
+	<macro id="nlfooter">
+		<table class="footer" style="width: 100%;">
+			<tr>
+			<td><span class="footersmall">${record.tranid} &nbsp; | &nbsp; EST010 &nbsp; | &nbsp; ${record.entity.entityid} &nbsp; | &nbsp; PRIVATE &amp; CONFIDENTIAL &nbsp; | &nbsp; Firewize Services Pty Ltd</span></td>
+			<td align="right" width="20mm"><span class="footersmall"><pagenumber/> of <totalpages/></span></td>
+			</tr>
+		</table>
+	</macro>
+	<!-- FOOTER END   -->
+</macrolist>
+
+
+
+<!-- ################################################################################################## -->
+<!-- ##                                               CSS                                            ## -->
+<!-- ################################################################################################## -->
+
+
+<style type="text/css">
+
+  *						{ font-family: "Arial, Helvetica, sans-serif";}
+  .center				{ margin: auto; text-align: center; }
+  body					{ font-size: 9pt; }
+  body.p				{ margin: 2mm 0mm 2mm 0mm; }
+  a:link				{ text-decoration: none; }
+  b						{ font-weight: bold; color: #333333; }
+  em					{ font-style: italic; }
+  h1, h2, h3, h4		{ font-family: "Arial, Helvetica, sans-serif"; font-style: normal;}
+  h1					{ font-size:16pt; font-weight:bold; }
+  h2					{ font-size:14pt; font-weight:bold; }
+  h3					{ font-size:11pt; font-weight:bold; padding: 0mm 0mm 0mm 0mm; }
+  h4					{ font-size:10pt; font-weight:bold; }
+  ul					{ padding-left:10mm; list-style-type: square; }
+  td p					{ text-align: left; }
+
+  table.conditions      { margin-top: 5mm; padding: 1mm; page-break-inside: avoid; background-color: ${BGF}; border: 1px solid ${BGB};}
+  ol.conditions			{ margin: 0mm 0mm 0mm 0mm; padding: 0mm 2mm 0mm; vertical-align: middle; font-size: 8pt;}
+
+  <!-- Big Faceless PDF Library CSS Page Selectors -->
+  #page1 { background-color:#ffffff; }
+  #page2 { background-color:#ffffff; }
+  #page3 { background-color:#ffffff; }
+  #page4 { background-color:#ffffff; }
+
+  #TextPadding	{ padding-left:5mm; padding-right:5mm; }
+  
+  p.discount		{ border-left: 2px solid #77DD77; padding: 0mm 0mm 0mm 3mm; margin: 0mm 0mm 0mm -3mm; }
+  p.description		{ border-left: 2px solid #6495ED; padding: 0mm 0mm 0mm 3mm; margin: 0mm 0mm 0mm -3mm; }
+  p.heading			{ font-weight: bold; text-align:center; text-transform: uppercase; padding: 0.75em 0em}
+  
+  table				{ font-family: sans-serif; font-size: 8pt; table-layout: fixed; width: 100%;}
+  th				{ font-weight: bold; font-size: 9pt; vertical-align: middle; padding: 5px 6px 3px; background-color: #e3e3e3; color: #333333; }
+  td				{ padding: 0px; font-size: 9pt; }
+
+  table.header td	{ padding: 0; font-size: 9pt; }
+  .footer tr td		{ padding: 0; font-size: 7pt; }
+
+  <!-- ITEMS TABLE HEADER-ROW -->
+  table.itemheader		{ margin: 3mm 0mm 0mm 0mm; padding: 0mm 0mm 2mm 0mm; border: 0px solid #ECF0F1; }
+  .itemheader th		{ margin: 0mm 0mm 0mm 0mm; border-top: 1px solid ${BGB}; border-bottom: 1px solid ${BGB}; font-weight: bold; background-color: ${BGF} vertical-align: middle; }
+
+  <!-- ITEMS TABLE -->
+  table.items		 	{ margin: 0mm 0mm 2mm 0mm; padding: 0mm 0mm; border: 0px solid #ECF0F1;}
+  .items th				{ margin: 0mm; border-top: 1px solid ${BGB}; border-bottom: 1px solid ${BGB}; background-color: ${BGF} vertical-align: middle; }
+  .items tr	td			{ font-size: 8pt; }
+  .items td				{ margin: 0mm 0mm; padding: 0mm 0mm; }
+  tr.itemsubtotal		{ margin: 1mm 0mm 2mm 0mm; }
+  td.itemsubtotal		{ margin: 0mm 0mm 0mm 0mm; padding: 1mm 0mm 0mm 0mm; border-top: 1px solid ${BGB}}
+  td.itemsection		{ margin: 1.5mm 0mm 1mm 1.25mm; font-weight: bold; text-transform: uppercase; font-size: 9pt;}
+
+  td.item-heading		{ margin: 1.75mm 0mm 0mm 1mm; font-weight: bold; text-transform: uppercase; }
+  td.item-row			{ margin: 1.75mm 0mm 0mm 0mm; }
+  td.item-observation	{ margin: 1.75mm 0mm 0mm 0mm; font-weight: bold; border-top: 1px solid ${BGB};}
+  td.item-response		{ margin: 1.75mm 0mm 0mm 0mm; font-style: italic;}
+  td.item-comment		{ margin: 1.75mm 0mm 0mm 0mm; }
+  
+
+  ul.items				{ margin: 0mm; padding: 0mm; }
+  ul.itemsgroup			{ margin: 0mm 0mm 1mm 1mm ; padding: 0mm; }
+  .items li				{ margin: 0mm ; padding: 1mm 0mm 0.5mm 3mm; }
+  <!-- /ITEMS TABLE -->
+
+  <!-- ITEMS TOTAL TABLE -->
+  table.total       	{ margin: 4mm 0mm; padding: 2mm 0mm; page-break-inside: avoid; background-color: ${BGF}; border: 1px solid ${BGB};}
+  td.totaltext			{ margin: 0mm 0mm 0mm 0mm; padding: 0mm 2mm 0mm; vertical-align: middle; font-size: 9pt;}
+  td.totallabel p		{ margin: 1mm 1mm; padding: 0mm; vertical-align: middle; font-size: 9pt; color: #626567; font-weight:bold;}
+  td.totalamount p		{ margin: 1mm 1mm; padding: 0mm; vertical-align: middle; font-size: 9pt;}
+  <!-- /ITEMS TOTAL TABLE -->
+
+  <!-- TC -->
+  .tc					{ padding-top: 1mm; }
+  h3.tc					{ margin: 2mm 0mm 1mm 0mm; padding: 0mm; }
+  <!-- /TC -->
+
+  <!-- PC -->
+  .tc					{ padding-top: 1mm; }
+  h3.tc					{ margin: 2mm 0mm 1mm 0mm; padding: 0mm; }
+  <!-- /PC -->
+
+  <!-- APPROVAL -->
+  .approval				{ }
+  h3.approval			{ margin: 3mm 0mm 0mm 0mm; padding: 0mm; }
+  <!-- /APPROVAL -->
+
+  <!-- TERMS+CONDITIONS -->
+  .terms				{ font-size:9pt; }
+  h3.terms				{ padding: 5mm 0mm 0.5mm 0mm; font-size: 8pt; text-transform: uppercase;}
+  ol.terms				{ margin: 0mm 0mm 0mm 2mm; padding: 0mm 0mm 1mm 0mm; }
+  <!-- /TERMS+CONDITIONS -->
+
+  <!-- PAGE HEADINGS START -->
+  table.body td		{ padding-top: 2px; }
+  tr.totalrow		{ background-color: #F0F0F0; line-height: 200%; }
+  td.totalboxtop	{ font-size: 12pt; background-color: #F0F0F0; }
+  td.addressheader	{ font-size: 8pt; padding-top: 6px; padding-bottom: 2px; }
+  td.address		{ padding-top: 0; }
+  span.title		{ font-size: 14pt; }
+  span.number		{ font-size: 14pt; }
+  span.itemname		{ font-weight: bold; line-height: 150%; }
+  hr				{ width: 100%; color: #d3d3d3; background-color: #d3d3d3; height: 1px; padding: 0mm;  margin: 2mm 0mm; }
+  body.letter		{ font-size: 10pt; }
+  span.headeraddress { font-size: 7pt; padding-bottom: 3mm; }
+  span.headeraddresscompany  { font-size: 7pt; font-weight: bold; padding-bottom: 3mm; }
+  span.footersmall  { font-size: 7pt; }
+
+  <!-- SIGNATURE TABLE -->
+  td.topline		{ border-top: 1px solid #808B96; padding: 0mm 0mm 0mm 0mm; }
+
+</style>
+
+
+
+</head>
+
+<body header="nlheader" header-height="25mm" footer="nlfooter" footer-height="0mm" padding="10mm" size="A4">
+
+<!-- ################################################################################################## -->
+<!-- ##                                          COVER PAGE (OPTIONAL)                               ## -->
+<!-- ################################################################################################## -->
+
+<#if record.custbody_coverpage?string=="Yes">
+
+		<table class="header" style="width: 100%;">
+			<tr>
+			<td width="150mm">
+				${record.billaddress}
+			</td>
+
+			<td align="right">
+				${aDate}
+			</td>
+			</tr>
+		</table>
+
+<p>&nbsp;<br />&nbsp;<br /></p>
+
+<span>Dear ${ContactFirstName},</span>
+
+<table>
+  <tr>
+    <td align="center"><p class="heading">${record.title} (${record.tranId})<br />${record.memo}</p></td>
+  </tr>
+</table>
+
+<p>Thank you for the opportunity to present this proposal for ${record.title}, ${record.memo}.</p>
+
+${record.custbody_comments}
+
+<p>Please review the attached proposal, scope of work, item quantities carefully to ensure it reflects your requirements. While every effort has been taken to determine the scope of work, there may be some minor variations and adjustments according to the site conditions.</p>
+
+<p>We trust this adequately clarifies the nature of the project and the benefits of proceeding with our submission. Please feel free to call me on 1300 30 88 22 if you have any further questions.</p>
+
+<p style="margin-bottom:2em;">Regards,</p>
+
+<p>${record.salesrep}<br />${record.salesrep.title}</p>
+
+
+<pbr />
+</#if>
+
+
+
+<!-- ################################################################################################## -->
+<!-- ##                                 PROJECT ESTIMATE LAYOUT START                                ## -->
+<!-- ################################################################################################## -->
+
+<#if record.department?contains ("2-UM") || record.department?contains ("3-ER") || record.department?contains ("4-MW") || record.department?contains ("5-CW") || record.department?contains ("5-TR") || record.department?contains ("7-Consulting") || record.department?contains ("8-PS") || record.department?contains ("Online")>
+
+<!-- HEADING ROW START -->
+
+    <table style="width: 100%;">
+      <tr>
+        <td width="12%" align="left">
+          <#if record.entitystatus == "BUDGET">
+            <h2 class="pagetop">Budget</h2>
+          <#else>
+            <h2 class="pagetop">Estimate</h2>
+          </#if>
+        </td>
+        <td width="76%" align="center"><h2 class="pagetop">${record.title} <br /> ${record.memo}</h2></td>
+        <td width="12%" align="right"><h2 class="pagetop">${record.tranId}</h2></td>
+      </tr>
+    </table>
+
+<!-- HEADING ROW END -->
+
+
+    <p>We are pleased to present this <#if record.entitystatus == "BUDGET">budget<#else>estimate</#if> (${record.tranId}) to undertake the defined scope of work listed below.  The <#if record.entitystatus == "BUDGET">budget<#else>estimate</#if> prepared by <strong>${record.salesrep}</strong> is valid until ${record.duedate}, after which time it expires or is subject to review.</p>
+
+    <p class="description">${Comments}</p>
+
+    <!-- SCOPE OF WORK  -->
+    <#if record.item?has_content>
+      <#list record.item as item>
+          <#if item.item?contains ("SOW")>
+            <p class="description">&nbsp;<br /></p>
+            <p class="description">${item.description} ${custcol_item_location}</p>
+          </#if>
+      </#list>
+    </#if>
+    <!-- /SCOPE OF WORK  -->
+
+    <p>Please review the attached scope of work (below) carefully to ensure it reflects your requirements. While every effort has been taken to determine the scope of work, there may be some minor variations and adjustments according to the site conditions.</p>
+
+    <#if record.custbody_hide_items_heading?string=="Yes">
+      <hr style="" />
+    <#else>
+    <#if record.item?has_content>
+      <table class="itemheader" style="width: 100%;">
+            <#list record.item as item>
+                <#if item_index==0>
+                    <thead>
+                        <tr>
+
+                            <!--  SCOPE OF WORK HEADING START -->
+                            <th colspan="31">Scope of Work</th>
+                            <!--  SCOPE OF WORK END -->
+
+
+                            <!--  ITEM QUANTITY HEADING START -->
+                            <#if record.custbody_item_item_qty?string=="No">
+                              <th colspan="2" align="center">Qty</th><#else>
+                            </#if>
+                            <!--  ITEM QUANTITY HEADING END -->
+
+
+                            <!--  ITEM PRICE HEADING START -->
+                            <#if record.custbody_item_show_price?string=="Yes">
+                              <th colspan="3" align="center">Price</th><#else>
+                            </#if>
+                            <!--  ITEM PRICE HEADING END -->
+
+
+                        </tr>
+                    </thead>
+                </#if>
+            </#list>
+      </table>
+    </#if>
+    <!-- /ITEM TABLE HEADER -->
+    </#if>
+
+
+    <!-- ITEM TABLE ITEMS -->
+    <#if record.item?has_content>
+        <table class="items" style="width: 100%;">
+            <#list record.item as item>
+
+                    <tr class="items">
+                        <#if item.itemtype == "Description">
+                            <#if item.item?contains ("N-") || item.item?contains ("NOTE") || item.item?contains ("H1")>
+                              <td colspan="31" class="itemsection">${item.description}</td>
+                              <#elseif item.item?contains ("BREAK")>
+                                <!-- INSERT A PAGEBREAK HERE -->
+                              <#elseif item.item?contains ("OBSERVATION")>
+                                <td colspan="31" class="item-observation">${item.description}</td>
+                              <#elseif item.item?contains ("RESPONSE")>
+                                <td colspan="31" class="item-response">${item.description}</td>
+                              <#elseif item.item?contains ("COMMENT")>
+                                <td colspan="31" class="item-comment">${item.description}</td>
+                            </#if>
+                        <#elseif item.itemtype == "Subtotal">
+                        <#elseif item.itemtype == "Markup">
+                        <#elseif item.itemtype == "EndGroup">
+                        <#else>
+                            <#if item.ingroup == "T">
+                                <td colspan="31">
+                                  <ul class="itemsgroup">
+                                    <li>${item.description}-</li>
+                                  </ul>
+                                </td>
+                            <#else>
+                                <td colspan="31">
+                                    <#if record.custbody_item_show_price?string=="Yes">
+                                      <ul class="itemsgroup">
+                                        <li>
+                                          <#if record.custbody_item_item_qty?string=="No">
+                                            <#if item.custcol_display_qty?string=="Yes">${item.quantity?string("0.#")} x </#if>
+                                          </#if>
+                                          ${item.description}
+                                          <#if record.custbody_fs_show_item_location?string=="Yes">
+                                          	<#if item.custcol_item_location?has_content><em>${item.custcol_item_location}</em></#if>
+                                          </#if>
+                                        </li>
+                                      </ul>
+                                      <#else>
+                                        <ul class="itemsgroup">
+                                        <li>-${item.description}</li>
+                                        </ul>
+                                    </#if>
+                                </td>
+                            </#if>
+                        </#if>
+
+                            <!--  ITEM QUANTITY ROWS START HIDE IF NO -->
+                            <#if record.custbody_item_item_qty?string=="No">
+                              <td colspan="2" align="center">
+                                <#if item.quantity gt 0> ${item.quantity?string("0.#")}<#else></#if> </td><#else>
+                            </#if>
+                            <!--  ITEM QUANTITY ROWS END -->
+
+                            <!--  ITEM PRICE HEADING START -->
+                            <#if record.custbody_item_show_price?string=="Yes">
+                              <td colspan="3" align="right"> <#if item.rate gt 0> ${item.amount?string.currency} <#else></#if> </td><#else>
+                            </#if>
+                            <!--  ITEM PRICE HEADING END -->
+
+
+                    </tr>
+
+                    <!-- SUBTOTAL -->
+                    <#if record.custbody_fw_show_subtotal?string=="Yes">
+                        <tr class="itemsubtotal">
+                            <#if item.itemtype == "Subtotal">
+                              <td colspan="30" align="left" class="itemsubtotal" style="font-weight:bold;">SUBTOTAL:</td>
+                              <td colspan="4" align="right" class="itemsubtotal" style="font-weight:bold;">${item.amount?string.currency}</td>
+                            </#if>
+                        </tr>
+                    </#if>
+                    <!-- /SUBTOTAL -->
+
+            </#list>
+        </table>
+    </#if>
+    <!-- /ITEM TABLE ITEMS -->
+
+
+    <!-- ESTIMATE ITEMS-TABLE TOTAL START  -->
+    <#if record.custbody_estimate_hide_totalbox?string=="Yes">
+      <hr />
+    <#else>
+
+      <table class="total" style="width: 100%; margin-top: 5px;">
+        <tr>
+          <td align="left" class="totaltext" style="border-right: 1px solid ${BGB};"><@TotalMessageGeneral/></td>
+          <td align="left" width="5mm"> &nbsp; </td>
+          <td align="right" width="30mm" class="totallabel">
+            <p>${record.subtotal@label}</p>
+            <#if record.discounttotal == 0><#else><p style="padding-top:4px">Discount</p></#if>
+            <#if record.discounttotal == 0><#else><p>Revised Subtotal<sup>&dagger;</sup></p></#if>
+            <p>GST</p>
+            <p>${record.total@label}</p>
+          </td>
+          <td align="right" width="21mm" class="totalamount">
+            <p>${record.subtotal?string.currency}</p>
+            <#if record.discounttotal == 0><#else><p style="padding-top:4px">${record.discounttotal?string.currency}</p></#if>
+            <#if record.discounttotal == 0><#else><p><strong>${DiscountedSubtotal}</strong></p></#if>
+            <p>${record.taxtotal?string.currency}</p>
+            <p>${record.total?string.currency}</p>
+          </td>
+        </tr>
+      </table>
+
+
+      <!-- DISCOUNT MESSAGE (IF APPLICABLE) -->
+      <p><#if record.discounttotal == 0><#else><p><@DiscountMessage/></p></#if></p>
+
+    </#if>
+
+</#if>
+<!-- ESTIMATE ITEMS-TABLE TOTAL END  -->
+
+
+<!-- ################################################################################################## -->
+<!-- ##                                  PROJECT ESTIMATE LAYOUT END                                 ## -->
+<!-- ################################################################################################## -->
+
+
+
+
+
+
+<!-- ################################################################################################## -->
+<!-- ##                                   PLANNED MAINTENANCE LAYOUT                                 ## -->
+<!-- ################################################################################################## -->
+
+<#if record.department?contains ("1-PM")>
+
+    <table style="width: 100%;">
+      <tr>
+        <td width="12%" align="left">
+          <#if record.entitystatus == "BUDGET">
+            <h2 class="pagetop">Budget</h2>
+          <#else>
+            <h2 class="pagetop">Estimate</h2>
+          </#if>
+        </td>
+        <td width="76%" align="center"><h2 class="pagetop">${record.title} - ${record.memo}</h2></td>
+        <td width="12%" align="right"><h2 class="pagetop">${record.tranId}</h2></td>
+      </tr>
+    </table>
+
+
+    <p>Thank you for your request for our <#if record.entitystatus == "BUDGET">budget<#else>estimate</#if> for <strong>${record.memo} (${record.tranId})</strong> dated ${record.trandate} valid until ${record.duedate}, prepared by <strong>${record.salesrep}</strong>.</p>
+
+	<#if record.discounttotal lt 0><p class="discount">This proposal provides for a <strong>discount of ${DiscountAmount} or a saving of ${DiscountPercentage}</strong> which has been applied to the subtotal (ex GST) listed below. The discount may only be applied only when the account is paid in full by the due date of the invoice and all other conditions associated with this proposal have been met.  &nbsp; When these conditions are not met, the full amount of ${record.subtotal?string.currency} plus GST shall apply.</p> <div style="padding-bottom:1em;"></div><#else></#if>
+
+
+    <p class="description">${Comments}</p>
+
+    <!-- SCOPE OF WORK  -->
+    <#if record.item?has_content>
+      <#list record.item as item>
+          <#if item.item?contains ("SOW")>
+            <p class="description">&nbsp;<br /></p>
+            <p class="description">${item.description} ${item.custitem_item_display}</p>
+          </#if>
+      </#list>
+    </#if>
+    <!-- /SCOPE OF WORK  -->
+
+    <p>Based on the information provided or made available we have prepared this scope of work for the routine servicing of the fire protection systems and equipment for your review. We believe this proposal will help satisfy the obligations to maintain the nominated fire and essential safety measures in accordance with Part 15 of the <a href="https://firewize.com.au/learn/building-regulations-vic-2018-part-15">Building Regulations (Vic) 2018</a>.</p>
+
+
+    <!-- ITEM TABLE HEADER -->
+    <#if record.item?has_content>
+      <table class="itemheader" style="width: 100%;">
+        <thead>
+          <tr class="itemheader">
+            <th colspan="23">Scope of Work</th>
+            <th colspan="3" align="center">Qty</th>
+            <th colspan="4">Standard</th>
+            <th colspan="4">Frequency</th>
+            <#if record.custbody_item_show_price?string=="Yes">
+                <th colspan="3" align="right">Rate</th>
+            </#if>
+          </tr>
+        </thead>
+      </table>
+    </#if>
+    <!-- /ITEM TABLE HEADER -->
+
+
+    <!-- ITEM TABLE ITEMS -->
+    <#if record.item?has_content>
+      <table class="items" style="width: 100%;">
+        <#list record.item as item><#if item_index==0></#if>
+          <#if item.itemtype == "Description">
+            <#if item.item?contains ("N-") || item.item?contains ("NOTE")>
+            <tr>
+              <td colspan="34" class="item-heading">${item.description}
+              <!-- START ASSET ID TO LINE HEADER IF APPLICABLE --> 
+              	<#if record.custbody_fs_show_item_location?string=="Yes">
+                	<#if item.custcol_item_assetid?has_content><strong>&nbsp;&nbsp;&nbsp;[${item.custcol_item_assetid}]</strong></#if>
+                </#if>
+              <!-- END ASSET ID TO LINE HEADER IF APPLICABLE -->
+              </td>
+            </tr>
+            </#if>
+          <#elseif item.itemtype == "Markup">
+          <#elseif item.itemtype == "Subtotal">
+
+                    <!-- SUBTOTAL -->
+                    <#if record.custbody_fw_show_subtotal?string=="Yes">
+                        <tr class="itemsubtotal">
+                            <#if item.itemtype == "Subtotal">
+                              <td colspan="30" align="left" class="item-heading" style="font-weight:bold;">SUBTOTAL:</td>
+                              <td colspan="4" align="right" class="item-heading" style="font-weight:bold;">${item.amount?string.currency}</td>
+                            </#if>
+                        </tr>
+                    </#if>
+                    <!-- /SUBTOTAL -->
+
+          <#else>
+            <#if item.item?contains ("PM-AH-")>
+              <tr>
+                <td colspan="34" class="item-row">${item.description}</td>
+              </tr>
+            <#else>
+              <tr>
+                <td colspan="23" class="item"><ul class="items"><li>${item.description}
+                  <!-- START ASSET ID TO LINE HEADER IF APPLICABLE --> 
+              		<#if record.custbody_fs_show_item_location?string=="Yes">
+                      <#if item.custcol_item_location?has_content><strong>&nbsp;&nbsp;[${item.custcol_item_location}]</strong></#if>
+                      <#if item.custcol_item_assetid?has_content><strong>&nbsp;&nbsp;[${item.custcol_item_assetid}]</strong></#if>
+                	</#if>
+              		<!-- END ASSET ID TO LINE HEADER IF APPLICABLE --></li></ul></td>
+                <td colspan="3" align="center">
+                  <#if item.custcol_display_qty?string=="Yes">
+                    <#if item.quantity gt 0>${item.quantity?string("0.#")}
+                    <#else>
+                      —
+                    </#if>
+                  </#if>
+                </td>
+                <td colspan="4">${item.custcol_item_standard}</td>
+                <td colspan="4" style="padding-left:3mm;">
+                  <#assign a = item.custcol_item_frequency>
+                  <#assign b = a?replace("3-Monthly", "3")>
+                  <#assign c = b?replace("6-Monthly", "6")>
+                  <#assign d = c?replace("Monthly", "M")>
+                  <#assign e = d?replace("Yearly", "Y")>
+                  <#assign f = e?replace("5-Yearly", "Y5")>
+                  ${f}
+                </td>
+                <#if record.custbody_item_show_price?string=="Yes">
+                    <td colspan="3" align="right"><#if item.amount gt 0>${item.amount?string.currency}</#if></td>
+                </#if>
+              </tr>
+            </#if>
+          </#if>
+        </#list>
+      </table>
+    </#if>
+    <!-- /ITEM TABLE ITEMS -->
+
+
+
+    <!-- ESTIMATE ITEMS-TABLE TOTAL START  -->
+    <#if record.custbody_estimate_hide_totalbox?string=="Yes">
+
+    <#else>
+
+      <table class="total">
+      <tr>
+      <td align="left" class="totaltext" style="border-right: 1px solid ${BGB};">
+        <@TotalMessagePlannedMaintenance/>
+        <span style="color:${SECRET}; padding-left:5mm;">(${record.startdate}-${record.enddate}) </span>
+        <span style="color:${SECRET}; padding-left:5mm;">[${QuoteHRS?int} ${QuoteEGPP?string(",##.00")}.${QuoteEGPD?string(",##0")}.${HRRate?string(",##0")}]</span>
+      </td>
+      <td align="left" width="2mm"> &nbsp; </td>
+      <td align="center" width="25mm" class="totalamount">
+          <#if record.custbody_inv_frequency == "Total">
+            <!-- DISCOUNT ADDED -->
+              <#if record.discounttotal < 0>
+                <p style="font-size:8pt">Discounted Total</p>
+                <p style="font-size:14pt; font-weight:bold;">${DiscountedSubtotal}</p>
+                <p style="font-size:8pt">Ex GST</p>
+              <#else>
+                <p style="font-size:8pt">Total (Ex GST)</p>
+                <p style="font-size:14pt; font-weight:bold;"><#assign tt = record.subtotal/1> ${tt?string.currency}</p>
+              </#if>
+          <#elseif record.custbody_inv_frequency == "Monthly">
+            <p style="font-size:8pt">Monthly (Ex GST)</p>
+            <p style="font-size:14pt; font-weight:bold;"><#assign tm = record.subtotal/12> ${tm?string.currency}</p>
+          <#elseif record.custbody_inv_frequency == "2-Monthly">
+            <p style="font-size:8pt">2-Monthly (Ex GST)</p>
+            <p style="font-size:14pt; font-weight:bold;"><#assign tm2 = record.subtotal/6> ${tm2?string.currency}</p>
+          <#elseif record.custbody_inv_frequency == "3-Monthly">
+            <p style="font-size:8pt">Quarterly (Ex GST)</p>
+            <p style="font-size:14pt; font-weight:bold;"><#assign tq = record.subtotal/4> ${tq?string.currency}</p>
+          <#elseif record.custbody_inv_frequency == "6-Monthly">
+            <p style="font-size:8pt">6-Monthly (Ex GST)</p>
+            <p style="font-size:14pt; font-weight:bold;"><#assign t6 = record.subtotal/2> ${t6?string.currency}</p>
+          <#elseif record.custbody_inv_frequency == "Yearly">
+            <p style="font-size:8pt">Yearly (Ex GST)</p>
+            <p style="font-size:14pt; font-weight:bold;"><#assign ty = record.subtotal/1> ${ty?string.currency}</p>
+           <#elseif record.custbody_inv_frequency == "5Y-Yearly">
+            <p style="font-size:8pt">Yearly (Ex GST)</p>
+            <p style="font-size:14pt; font-weight:bold;"><#assign ty = record.subtotal/5> ${ty?string.currency}</p>
+           <#else>
+            <p style="font-size:8pt">Total (Ex GST)</p>
+            <p style="font-size:14pt; font-weight:bold;">${record.subtotal?string.currency}</p>
+          </#if>
+      </td>
+      </tr>
+      </table>
+    </#if>
+</#if>
+
+
+<!-- ################################################################################################## -->
+<!-- ##                                          FOOTER LAYOUT                                       ## -->
+<!-- ################################################################################################## -->
+
+<!-- PC PRIME COST -->
+<table class="pc" style="width: 100%;">
+  <tr>
+    <td>
+        <#if record.item?has_content>
+          <#list record.item as item>
+            <#if item.item?contains ("PC-")>
+              <h3 class="pc">Prime Cost Sum ("PC Sum")</h3>
+              <p>Due to the nature of the works in this project, there are elements that we are unable to quantify. To this end, we heve provided the following Prime Costs ("PC") that must be included within the scope of work but have not been included in the Total sum fees. Please contact <strong>${record.salesrep}</strong> if you have further questions.</p>
+              <#break>
+            </#if>
+          </#list>
+        </#if>
+
+        <table class="" style="width: 100%;">
+          <tr>
+            <td>
+              <#if record.item?has_content>
+                <ol class="terms">
+                  <#list record.item as item>
+                    <#if item.item?contains ("PC-")>
+                      <li>${item.description} ${item.custitem_item_display}</li>
+                    </#if>
+                  </#list>
+                </ol>
+              </#if>
+            </td>
+          </tr>
+        </table>
+    </td>
+  </tr>
+</table>
+<!-- /PC PRIME COST -->
+
+
+<!-- CONDITIONS  -->
+<table class="tc" style="width: 100%;">
+  <tr>
+    <td>
+        <#if record.item?has_content>
+          <#list record.item as item>
+            <#if item.item?contains ("TC-")>
+              <h3 class="tc">Proposal Terms, Conditions, Qualifications</h3>
+              <#break>
+            </#if>
+          </#list>
+        </#if>
+
+        <table class="" style="width: 100%;">
+          <tr>
+            <td>
+              <#if record.item?has_content>
+                <ol class="terms">
+                  <#list record.item as item>
+                    <#if item.item?contains ("TC-")>
+                      <li>${item.description} ${item.custitem_item_display}</li>
+                    </#if>
+                  </#list>
+                </ol>
+              </#if>
+            </td>
+          </tr>
+        </table>
+    </td>
+  </tr>
+</table>
+<!-- /CONDITIONS  -->
+
+
+
+<!-- START WORKPLACE EMERGENCY RESPONSE FOOTER  -->
+
+<#if record.department == "5-TR Training">
+
+    <h3>Summary</h3>
+    <p>This proposal provides you to the best of our understanding the scope of work you have requested for the development and delivery of resources,  training and/or evacuation diagrams for emergency planning in facilities as described in Australian Standard AS3745. The proposal has been written in such a way as to guide you toward a structured approach to the provision of emergency response preparedness comprising;</p>
+
+    <ul>
+      <li>Establishment</li>
+      <li>Training</li>
+      <li>Evacuation Diagrams</li>
+      <li>Emergency Response Exercise</li>
+    </ul>
+
+    <p>If required, we can further tailor the scope of work including delivery according to your timeframes and budget. If you would like to tailor this proposal further, simply contact <strong>${record.salesrep}</strong> who will be only too willing to assist.</p>
+
+    <p>By accepting this quotation for ${record.memo} (${record.tranId}) dated ${record.trandate} for <strong>${record.total?string.currency}</strong> plus GST, prepared by either through the issuing of an instruction (written or verbal), official order or authorising this page you acknowledge the scope of work as detailed including all qualifications and associated terms and conditions.</p>
+
+    <p>In providing you this quotation, we assume you will provide us with clear and timely instructions; free and uninterrupted access to the workplace and that there will be no material change to the scope of work or nothing unforeseen or complicated arises that significantly alters the scope. If this is not the case, we may charge for any additional work at our current hourly rates plus costs.</p>
+
+    <p>In order to avoid any unnecessary project delays, doubt or confusion, we will only proceed when this quotation has been approved, signed by and returned to us with an official order or written approval.  Once complete, Please return the signed copy to <strong>${record.salesrep}</strong> by email to support@firewize.com or fax 1300 30 88 02.</p>
+
+    <table class="" style="width: 100%;">
+        <tr style="padding: 9mm 0mm 0mm 0mm;">
+            <td colspan="10" class="topline">Signed (the Customer)</td>
+            <td colspan="1" >&nbsp;</td>
+            <td colspan="10" class="topline">Name (Printed)</td>
+            <td colspan="1" >&nbsp;</td>
+            <td colspan="6" class="topline">Date</td>
+        </tr>
+        <tr style="padding: 9mm 0mm 0mm 0mm;">
+            <td colspan="15" class="topline">Company</td>
+            <td colspan="1">&nbsp;</td>
+            <td colspan="12" class="topline">Order No</td>
+        </tr>
+    </table>
+
+<#else>
+
+<!-- END WORKPLACE EMERGENCY RESPONSE FOOTER  -->
+
+  
+<!-- APPROVAL  -->
+<#if record.custbody_estimate_hide_approval?string=="No"> <!-- IF RESULT "YES" THEN HIDE APPROVAL CLAUSE -->
+  <table class="approval" style="width: 100%;">
+    <tr>
+      <td>
+        <h3 class="approval">Approval</h3>
+        <p>By accepting this proposal for ${record.memo} (${record.tranId}) dated ${record.trandate} for
+          
+          <#if record.discounttotal == 0>
+            ${record.subtotal?string.currency}
+          <#else>${QuoteDiscountSubtotal?string.currency} (that includes the applied discount)
+          </#if>
+          plus GST.  You can authorise your approval either through the issuing of an instruction (written or verbal), official order or authorising this page.  In doing so you acknowledge the scope of work and price as detailed including all qualifications and associated terms and conditions.</p>
+
+        <p>In providing you this proposal, we assume you will provide us with clear and timely instructions; free and uninterrupted access to the workplace and that there will be no material change to the scope of work or nothing unforseen or complicated arises that significantly alters the scope. If this is not the case, we may charge for any additional work at our current hourly rates plus costs.</p>
+
+       <p>Where a building permit forms part of the scope of work for this project, by signing this quote you authorise Firewise to act as your agent in applying for a building permit, and that building permit will be issued to you as an owner builder.</p>
+
+       <p>In order to avoid any unnecessary project delays, doubt or confusion, we will only proceed when this proposal has been approved, signed by and returned to us with an official order.  Once complete, Please return the signed copy to <strong>${record.salesrep}</strong> by email to <strong>${record.salesrep.email}</strong> or fax 1300 30 88 02.</p>
+
+        <table class="" style="width: 100%;">
+          <tr style="padding: 7mm 0mm 0mm 0mm;">
+            <td colspan="10" class="topline">Signed (the Customer)</td>
+            <td colspan="1" >&nbsp;</td>
+            <td colspan="10" class="topline">Name (Printed)</td>
+            <td colspan="1" >&nbsp;</td>
+            <td colspan="6" class="topline">Date</td>
+          </tr>
+          <tr style="padding: 7mm 0mm 0mm 0mm;">
+            <td colspan="15" class="topline">Company</td>
+            <td colspan="1">&nbsp;</td>
+            <td colspan="12" class="topline">Order No</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</#if>
+
+<!-- /APPROVAL  -->
+
+</#if>
+
+
+<!-- <p>Sales Rep: ${record.salesrep} <br /> Support Rep: ${user.FirstName} ${user.LastName}</p> -->
+
+
+
+
+<!-- PRODUCT IMAGES  -->
+
+<#if record.custbody_add_item_image?string=="Yes">
+<pbr />
+
+<h2 class="pagetop">Product Photos</h2>
+
+<table class="" style="width: 100%;">
+  <tr>
+    <td></td>
+    <td></td>
+    <td></td>
+  </tr>
+</table>
+
+
+<#if record.item?has_content>
+  <#list record.item as item>
+    <#if item.custitem_item_photo?has_content>
+      ${item.custitem_item_photo.url}
+      <!-- <img src="${companyInformation.logoUrl}" style="width:220px; height:51px; float: left; margin: 3px" /> -->
+    </#if>
+  </#list>
+</#if>
+
+
+</#if>
+
+<!-- /PRODUCT IMAGES  -->
+
+
+
+
+<!-- SCOPE OF WORK -->
+
+<#if record.custbody_scope?has_content>
+<pbr />
+
+<h2 class="pagetop">Scope of Work</h2>
+${record.custbody_scope}
+
+</#if>
+
+</body>
+</pdf>
+
+<!-- MERGE TERMS+CONDITIONS OF GOODS+SERVICES PDF -->
+
+<#if record.custbody_include_terms?string=="Yes"><pdf src="https://firewize.com/sites/default/files/2020-05/Firewize-Terms-Conditions-Goods-and-Services-V5-200525.pdf"/><#else></#if>
+
+</pdfset>
+
