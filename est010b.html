@@ -302,7 +302,7 @@ ${record.custbody_comments}
 <!-- ##                                 PROJECT ESTIMATE LAYOUT START                                ## -->
 <!-- ################################################################################################## -->
 
-<#if record.department?contains ("3-ER") || record.department?contains ("4-MW") || record.department?contains ("5-CW") || record.department?contains ("5-TR") || record.department?contains ("7-Consulting") || record.department?contains ("8-PS") || record.department?contains ("Online")>
+<#if record.department?contains ("2-UM") || record.department?contains ("3-ER") || record.department?contains ("4-MW") || record.department?contains ("5-CW") || record.department?contains ("5-TR") || record.department?contains ("7-Consulting") || record.department?contains ("8-PS") || record.department?contains ("Online")>
 
 <!-- HEADING ROW START -->
 
@@ -504,102 +504,7 @@ ${record.custbody_comments}
 <!-- ################################################################################################## -->
 
 
-<!-- ################################################################################################## -->
-<!-- ##                          UNPLANNED MAINTENANCE ESTIMATE LAYOUT START                         ## -->
-<!-- ################################################################################################## -->
 
-<#if record.department?contains ("2-UM")>
-
-<!-- ########## HEADING ROW START ########## -->
-
-<table style="width: 100%;">
-    <tr>
-      <td width="12%" align="left">
-        <#if record.entitystatus == "BUDGET">
-          <h2 class="pagetop">Budget</h2>
-        <#else>
-          <h2 class="pagetop">Estimate</h2>
-        </#if>
-      </td>
-      <td width="76%" align="center"><h2 class="pagetop">${record.title} <br /> ${record.memo}</h2></td>
-      <td width="12%" align="right"><h2 class="pagetop">${record.tranId}</h2></td>
-    </tr>
-  </table>
-
-<!-- ########## HEADING ROW END ########## -->
-
-
-<!-- ########## SCOPE OF WORK AND INTRO SECTION END ########## -->
-<p>We are pleased to present this <#if record.entitystatus == "BUDGET">budget<#else>estimate</#if> (${record.tranId}) to undertake the defined scope of work listed below.  The <#if record.entitystatus == "BUDGET">budget<#else>estimate</#if> prepared by <strong>${record.salesrep}</strong> is valid until ${record.duedate}, after which time it expires or is subject to review.</p>
-<p class="description">${Comments}</p>
-<#if record.item?has_content>
-  <#list record.item as item>
-      <#if item.item?contains ("SOW")>
-        <p class="description">&nbsp;<br /></p>
-        <p class="description">${item.description} ${custcol_item_location}</p>
-      </#if>
-  </#list>
-</#if>
-<p>Please review the attached scope of work (below) carefully to ensure it reflects your requirements. While every effort has been taken to determine the scope of work, there may be some minor variations and adjustments according to the site conditions.</p>
-<!-- ########## SCOPE OF WORK AND INTRO SECTION END ########## -->
-
-<!-- ##########  ITEMS TABLE ROW HEADER START ########## -->
-<!-- ##########  ALWAYS SHOW SCOPE OF WORK, OPTIONALLY HIDE QTY AND ITEM PRICE ########## -->
-<#if record.item?has_content>
-<table class="itemheader" style="width: 100%;">
-    <#list record.item as item>
-        <#if item_index==0>
-            <thead>
-                <tr>
-                    <!--  SCOPE OF WORK HEADING START -->
-                    <th colspan="31">Scope of Work</th>
-                    <#if record.custbody_item_item_qty?string=="No">
-                        <th colspan="2" align="center">Qty</th><#else>
-                    </#if>
-                    <#if record.custbody_item_show_price?string=="Yes">
-                        <th colspan="3" align="center">Price</th><#else>
-                    </#if>
-                </tr>
-            </thead>
-        </#if>
-    </#list>
-</table>
-</#if>
-<!-- ##########  ITEMS TABLE ROW HEADER END ########## -->
-
-<!-- ##########  ITEMS TABLE ROW START ########## -->
-<!-- ##########  ALWAYS SHOW SCOPE OF WORK, OPTIONALLY HIDE QTY AND ITEM PRICE ########## -->
-<#if record.item?has_content>
-<table class="items" style="width: 100%;">
-    <#list record.item as item>
-        <#if item_index >= 1>
-        <tr class="items">
-                <#if item.quantity <= 0>
-                <!-- DONT SHOW ITEMS WITH A QTY of ZERO-->
-                <#else>
-                    <td colspan="31">${item.description}</td>
-                    <#if record.custbody_item_item_qty?string=="No">
-                        <td colspan="2" align="center">Qty</td>
-                    <#else>
-                    </#if>
-                    <#if record.custbody_item_show_price?string=="Yes">
-                    <td colspan="3" align="right"><#if item.amount gt 0>${item.amount?string.currency}</#if></td>
-                    </#if>
-                </#if>
-            </tr>
-        </#if>
-    </#list>
-</table>
-</#if>
-<!-- ##########  ITEMS TABLE ROW END ########## -->
-
-
-
-
-</#if>
-<!-- ################################################################################################## -->
-<!-- ##                           UNPLANNED MAINTENANCE ESTIMATE LAYOUT END                          ## -->
-<!-- ################################################################################################## -->
 
 
 
@@ -618,7 +523,7 @@ ${record.custbody_comments}
             <h2 class="pagetop">Estimate</h2>
           </#if>
         </td>
-        <td width="76%" align="center"><h2 class="pagetop">${record.title} - ${record.memo}</h2></td>
+        <td width="76%" align="center"><h2 class="pagetop">${record.title} <br /> ${record.memo}</h2></td>
         <td width="12%" align="right"><h2 class="pagetop">${record.tranId}</h2></td>
       </tr>
     </table>
@@ -1008,4 +913,3 @@ ${record.custbody_scope}
 <#if record.custbody_include_terms?string=="Yes"><pdf src="https://firewize.com/sites/default/files/2020-05/Firewize-Terms-Conditions-Goods-and-Services-V5-200525.pdf"/><#else></#if>
 
 </pdfset>
-
