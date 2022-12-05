@@ -553,21 +553,12 @@ ${record.custbody_comments}
                 <tr>
                     <!--  SCOPE OF WORK HEADING START -->
                     <th colspan="31">Scope of Work</th>
-                    <!--  SCOPE OF WORK END -->
-
-
-                    <!--  ITEM QUANTITY HEADING START -->
                     <#if record.custbody_item_item_qty?string=="No">
                         <th colspan="2" align="center">Qty</th><#else>
                     </#if>
-                    <!--  ITEM QUANTITY HEADING END -->
-
-
-                    <!--  ITEM PRICE HEADING START -->
                     <#if record.custbody_item_show_price?string=="Yes">
                         <th colspan="3" align="center">Price</th><#else>
                     </#if>
-                    <!--  ITEM PRICE HEADING END -->
                 </tr>
             </thead>
         </#if>
@@ -579,26 +570,31 @@ ${record.custbody_comments}
 <!-- ##########  ITEMS TABLE ROW START ########## -->
 <!-- ##########  ALWAYS SHOW SCOPE OF WORK, OPTIONALLY HIDE QTY AND ITEM PRICE ########## -->
 <#if record.item?has_content>
-<table class="itemheader" style="width: 100%;">
+<table class="items" style="width: 100%;">
     <#list record.item as item>
-        <#if item_index==0>
-            <thead>
-                <tr>
-                    <#if item.quantity <= 0>
-                    <!-- DONT SHOW ITEMS WITH A QTY of ZERO-->
+
+            <tr class="items">
+                <#if item.itemtype == "Description">
+
+
+<#if record.item?has_content>
+<table class="items" style="width: 100%;">
+    <#list record.item as item>
+        <#if item_index >= 1>
+            <tr>
+                <#if item.quantity <= 0>
+                <!-- DONT SHOW ITEMS WITH A QTY of ZERO-->
+                <#else>
+                    <td colspan="31">${item.description}</td>
+                    <#if record.custbody_item_item_qty?string=="No">
+                        <td colspan="2" align="center">Qty</td>
                     <#else>
-                        <td colspan="31">${item.description}</td>
-                        <#if record.custbody_item_item_qty?string=="No">
-                            <th colspan="2" align="center">Qty</th>
-                        <#else>
-                        </#if>
-                        <#if record.custbody_item_show_price?string=="Yes">
-                            <th colspan="3" align="center">Price</th>
-                        <#else>
-                        </#if>
                     </#if>
-                </tr>
-            </thead>
+                    <#if record.custbody_item_show_price?string=="Yes">
+                    <td colspan="3" align="right"><#if item.amount gt 0>${item.amount?string.currency}</#if></td>
+                    </#if>
+                </#if>
+            </tr>
         </#if>
     </#list>
 </table>
