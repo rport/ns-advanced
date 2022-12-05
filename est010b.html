@@ -556,7 +556,10 @@ ${record.custbody_comments}
         <thead>
           <tr class="itemheader">
             <th colspan="23">Scope of Work</th>
-            <th colspan="3" align="center">Qty</th>
+            <#if record.custbody_item_qty_hide_all?string=="Yes">
+            <#else>
+                <th colspan="3" align="center">Qty</th>
+            </#if>
             <th colspan="4">Standard</th>
             <th colspan="4">Frequency</th>
             <#if record.custbody_item_show_price?string=="Yes">
@@ -576,7 +579,7 @@ ${record.custbody_comments}
           <#if item.itemtype == "Description">
             <#if item.item?contains ("N-") || item.item?contains ("NOTE")>
             <tr>
-              <td colspan="34" class="item-heading">${item.description}
+              <td colspan="30" class="item-heading">${item.description}
               <!-- START ASSET ID TO LINE HEADER IF APPLICABLE --> 
               	<#if record.custbody_fs_show_item_location?string=="Yes">
                 	<#if item.custcol_item_assetid?has_content><strong>&nbsp;&nbsp;&nbsp;[${item.custcol_item_assetid}]</strong></#if>
@@ -607,7 +610,7 @@ ${record.custbody_comments}
             <#else>
             <#if item.quantity gt 0>
               <tr>
-                <td colspan="23" class="item">
+                <td colspan="30" class="item">
                     <ul class="items">
                         <li>${item.description}
                         <!-- START ASSET ID TO LINE HEADER IF APPLICABLE --> 
@@ -619,7 +622,7 @@ ${record.custbody_comments}
                         </li>
                     </ul>
                 </td>
-                <#if custbody_item_qty_hide_all?string=="Yes">
+                <#if record.custbody_item_qty_hide_all?string=="Yes">
                 <#else>
                 <td colspan="3" align="center">
                   <#if item.custcol_display_qty?string=="Yes">
