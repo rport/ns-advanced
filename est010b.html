@@ -572,16 +572,8 @@ ${record.custbody_comments}
 <#if record.item?has_content>
 <table class="items" style="width: 100%;">
     <#list record.item as item>
-
-            <tr class="items">
-                <#if item.itemtype == "Description">
-
-
-<#if record.item?has_content>
-<table class="items" style="width: 100%;">
-    <#list record.item as item>
         <#if item_index >= 1>
-            <tr>
+        <tr class="items">
                 <#if item.quantity <= 0>
                 <!-- DONT SHOW ITEMS WITH A QTY of ZERO-->
                 <#else>
