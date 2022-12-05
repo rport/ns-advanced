@@ -619,6 +619,8 @@ ${record.custbody_comments}
                         </li>
                     </ul>
                 </td>
+                <#if custbody_item_qty_hide_all?string=="Yes">
+                <#else>
                 <td colspan="3" align="center">
                   <#if item.custcol_display_qty?string=="Yes">
                     <#if item.quantity gt 0>${item.quantity?string("0.#")}
@@ -627,6 +629,7 @@ ${record.custbody_comments}
                     </#if>
                   </#if>
                 </td>
+                </#if>
                 <td colspan="4">${item.custcol_item_standard}</td>
                 <td colspan="4" style="padding-left:3mm;">
                   <#assign a = item.custcol_item_frequency>
